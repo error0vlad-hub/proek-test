@@ -23,8 +23,10 @@
       min-width: 320px;
       min-height: 100vh;
       margin: 0;
-      display: grid;
-      place-items: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
       overflow-x: hidden;
       background:
         radial-gradient(ellipse at 50% 0%, rgba(199, 225, 164, .34), transparent 55%),
@@ -40,6 +42,121 @@
       box-shadow: 0 24px 70px rgba(48, 74, 48, .12), 0 3px 10px rgba(48, 74, 48, .05);
     }
 
+    .game-lobby {
+      width: min(var(--preview-width, 1024px), calc(100% - 36px));
+      margin: 0 auto 18px;
+      padding: 30px 34px;
+      border: 1px solid rgba(38, 76, 59, .1);
+      border-radius: 28px;
+      background: rgba(255, 255, 250, .94);
+      box-shadow: 0 24px 70px rgba(48, 74, 48, .1);
+    }
+
+    .lobby-heading { margin-bottom: 23px; }
+    .lobby-heading h1 { margin-bottom: 7px; }
+    .lobby-heading p:last-child { margin: 0; color: #71866d; }
+
+    .game-cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .game-card {
+      min-height: 142px;
+      padding: 18px;
+      border: 1px solid #e4eadb;
+      border-radius: 18px;
+      color: #183b32;
+      background: #fbfcf8;
+      box-shadow: none;
+      text-align: left;
+      white-space: normal;
+    }
+
+    .game-card:hover { border-color: #bfd2b4; background: #f6f9f0; }
+    .game-card-icon { display: block; margin-bottom: 10px; font-size: 28px; }
+    .game-card-title { display: block; margin-bottom: 4px; font-size: 16px; }
+    .game-card-description { display: block; color: #71866d; font-size: 12px; font-weight: 500; line-height: 1.5; }
+    .game[hidden], .game-lobby[hidden] { display: none; }
+    .game-content[hidden], .mini-game[hidden] { display: none; }
+
+    .mini-game {
+      min-height: 300px;
+      padding: 22px;
+      border: 1px solid #e6ebdf;
+      border-radius: 18px;
+      background: #f7faef;
+      text-align: center;
+    }
+
+    .mini-game h2 { margin: 0 0 8px; font-size: clamp(22px, 4vw, 30px); }
+    .mini-game p { color: #71866d; }
+    .mini-status { min-height: 22px; color: #567052; font-size: 14px; font-weight: 700; }
+
+    .memory-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(48px, 84px));
+      justify-content: center;
+      gap: 9px;
+      margin: 22px auto 14px;
+    }
+
+    .memory-card {
+      min-height: 68px;
+      padding: 0;
+      border: 1px solid #dfe7d7;
+      border-radius: 13px;
+      color: #367b57;
+      background: #fffef8;
+      box-shadow: 0 3px 0 #e5ebdd;
+      font-size: 27px;
+    }
+
+    .memory-card.is-open, .memory-card.is-matched {
+      color: #234539;
+      background: #eaf2df;
+      box-shadow: none;
+    }
+
+    .reaction-pad {
+      width: min(100%, 480px);
+      min-height: 150px;
+      margin: 24px auto 0;
+      border-radius: 20px;
+      color: #fff;
+      background: #71866d;
+      font-size: 21px;
+    }
+
+    .reaction-pad.is-waiting { background: #dc9b4c; }
+    .reaction-pad.is-ready { background: #367b57; }
+
+    .target-field {
+      position: relative;
+      width: min(100%, 660px);
+      height: clamp(210px, 35vh, 320px);
+      margin: 16px auto 0;
+      overflow: hidden;
+      border: 1px solid #dfe7d7;
+      border-radius: 18px;
+      background: #fffef8;
+      touch-action: manipulation;
+    }
+
+    .target-button {
+      position: absolute;
+      min-width: 52px;
+      min-height: 52px;
+      padding: 0;
+      border-radius: 50%;
+      box-shadow: 0 4px 0 #276243;
+      font-size: 25px;
+      line-height: 1;
+    }
+
+    .mini-action { margin-top: 10px; }
+
     .topline, .scores, .bottomline {
       display: flex;
       align-items: center;
@@ -49,11 +166,12 @@
     .device-preview {
       width: min(var(--preview-width, 1024px), calc(100% - 36px));
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       gap: 7px;
       margin: 0 0 12px;
       padding: 9px 12px;
-      overflow-x: auto;
+      overflow-x: hidden;
       border: 1px solid rgba(38, 76, 59, .1);
       border-radius: 14px;
       background: rgba(255, 255, 250, .86);
@@ -69,7 +187,12 @@
       white-space: nowrap;
     }
 
+    @media (min-width: 601px) {
+      .device-preview-label { flex: 0 0 auto; }
+    }
+
     .device-preview button {
+      flex: 1 1 auto;
       min-height: 30px;
       padding: 0 10px;
       border: 1px solid #e2e9da;
@@ -85,6 +208,15 @@
       border-color: #367b57;
       color: #fff;
       background: #367b57;
+    }
+
+    .device-preview[data-preview="phone"] { gap: 4px; padding: 8px; }
+    .device-preview[data-preview="phone"] .device-preview-label { flex: 1 0 100%; }
+    .device-preview[data-preview="phone"] button {
+      flex: 1 1 0;
+      min-width: 0;
+      padding: 0 2px;
+      font-size: 9px;
     }
 
     .test-mode-status {
@@ -128,6 +260,8 @@
       margin: 16px 0 10px;
     }
 
+    .game-controls #backToGames { margin-right: auto; }
+
     .game-controls button {
       min-height: 34px;
       padding: 0 13px;
@@ -151,6 +285,8 @@
       font-weight: 800;
       letter-spacing: .12em;
     }
+
+    .scores[hidden] { display: none; }
 
     .scores strong {
       display: inline-block;
@@ -255,8 +391,17 @@
     }
 
     @media (max-width: 600px) {
-      .game, .device-preview { width: calc(100% - 20px); }
+      .game, .game-lobby, .device-preview { width: calc(100% - 20px); }
+      .device-preview { gap: 6px; padding: 9px; }
+      .device-preview-label { flex: 1 0 100%; }
+      .device-preview button { min-width: 0; padding: 0 5px; font-size: 10px; }
       .game { padding: 23px 16px 18px; border-radius: 22px; }
+      .game-lobby { padding: 23px 16px; border-radius: 22px; }
+      .game-cards { grid-template-columns: 1fr; gap: 10px; }
+      .game-card { min-height: 112px; }
+      .mini-game { padding: 18px 12px; }
+      .memory-grid { gap: 7px; }
+      .memory-card { min-height: 58px; }
       .badge { padding: 8px 10px; font-size: 10px; }
       .scores { gap: 12px; margin-top: 20px; }
       .game-controls { margin-top: 12px; }
@@ -275,6 +420,22 @@
     .game[data-preview="phone"] .scores strong { min-width: 35px; font-size: 15px; }
     .game[data-preview="phone"] .game-controls { margin-top: 12px; }
     .game[data-preview="phone"] .bottomline { font-size: 11px; }
+    .game[data-preview="phone"] .overlay { padding: 8px; }
+    .game[data-preview="phone"] .overlay h2 { margin-bottom: 4px; font-size: clamp(17px, 5vw, 22px); }
+    .game[data-preview="phone"] .overlay p { margin-bottom: 8px; font-size: 12px; }
+    .game[data-preview="phone"] #startButton {
+      min-height: 38px;
+      padding: 0 18px;
+      border-radius: 11px;
+      box-shadow: 0 3px 0 #276243, 0 5px 12px rgba(39, 98, 67, .16);
+      font-size: 12px;
+    }
+    .game-lobby[data-preview="phone"] { padding: 23px 16px; border-radius: 22px; }
+    .game-lobby[data-preview="phone"] .game-cards { grid-template-columns: 1fr; gap: 10px; }
+    .game-lobby[data-preview="phone"] .game-card { min-height: 112px; }
+    .game[data-preview="phone"] .mini-game { padding: 18px 12px; }
+    .game[data-preview="phone"] .memory-grid { gap: 7px; }
+    .game[data-preview="phone"] .memory-card { min-height: 58px; }
 
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
@@ -282,47 +443,80 @@
   </style>
 </head>
 <body>
-  <nav class="device-preview" aria-label="Проверка размеров экрана">
+  <nav class="device-preview" id="devicePreview" data-preview="laptop" aria-label="Проверка размеров экрана">
     <span class="device-preview-label">РАЗМЕР ЭКРАНА</span>
     <button type="button" data-preview-width="390" data-preview-kind="phone" aria-pressed="false">Телефон</button>
     <button type="button" data-preview-width="768" data-preview-kind="tablet" aria-pressed="false">Планшет</button>
     <button type="button" data-preview-width="1024" data-preview-kind="laptop" aria-pressed="true">Ноутбук</button>
     <button type="button" data-preview-width="1366" data-preview-kind="computer" aria-pressed="false">Компьютер</button>
   </nav>
-  <main class="game" data-preview="laptop">
+  <section class="game-lobby" id="gameLobby">
+    <header class="lobby-heading">
+      <p class="eyebrow">Игровая площадка</p>
+      <h1>Мини-игры</h1>
+      <p>Выбирай игру — всё работает в браузере на телефоне и компьютере.</p>
+    </header>
+    <div class="game-cards">
+      <button class="game-card" type="button" data-game="dino">
+        <span class="game-card-icon" aria-hidden="true">🦖</span>
+        <span class="game-card-title">Дино-побег</span>
+        <span class="game-card-description">Прыгай через кактусы, пригибайся от птиц и ставь рекорды.</span>
+      </button>
+      <button class="game-card" type="button" data-game="memory">
+        <span class="game-card-icon" aria-hidden="true">🧠</span>
+        <span class="game-card-title">Найди пару</span>
+        <span class="game-card-description">Запоминай карточки и находи одинаковые. Удобно играть касанием или мышью.</span>
+      </button>
+      <button class="game-card" type="button" data-game="reaction">
+        <span class="game-card-icon" aria-hidden="true">⚡</span>
+        <span class="game-card-title">Быстрая реакция</span>
+        <span class="game-card-description">Дождись сигнала и нажми как можно быстрее — проверь свою реакцию.</span>
+      </button>
+      <button class="game-card" type="button" data-game="stars">
+        <span class="game-card-icon" aria-hidden="true">⭐</span>
+        <span class="game-card-title">Лови звёзды</span>
+        <span class="game-card-description">Собери как можно больше звёзд за 20 секунд. Нажимай или касайся экрана.</span>
+      </button>
+    </div>
+  </section>
+  <main class="game" id="gameShell" data-preview="laptop" hidden>
     <header class="topline">
       <div>
         <p class="eyebrow">Маленькая большая игра</p>
-        <h1>Дино-побег</h1>
+        <h1 id="activeGameTitle">Дино-побег</h1>
       </div>
       <span class="badge">Авторский раннер · 🌵 🪽</span>
     </header>
 
-    <div class="scores" aria-live="polite" aria-atomic="true">
+    <div class="scores" id="dinoScores" aria-live="polite" aria-atomic="true">
       <span>СЧЁТ<strong id="score">00000</strong></span>
       <span>РЕКОРД<strong id="best">00000</strong></span>
     </div>
     <p class="test-mode-status" id="testModeStatus" role="status" hidden>РЕЖИМ ПРОВЕРКИ UFO · БЕССМЕРТИЕ И УСКОРЕНИЕ</p>
 
     <div class="game-controls" aria-label="Управление игрой">
+      <button id="backToGames" type="button">← Все игры</button>
       <button id="pauseButton" type="button" disabled>Пауза</button>
     </div>
 
-    <section class="arena" aria-label="Игровое поле">
-      <canvas id="gameCanvas" width="900" height="300" aria-label="Динозавр бежит по пустыне. Перепрыгивайте кактусы и птиц."></canvas>
-      <div class="overlay" id="overlay">
-        <div class="overlay-content">
-          <h2 id="overlayTitle">Готов к приключению?</h2>
-          <p id="overlayText">Прыгай через кактусы и ставь рекорды!</p>
-          <button id="startButton" type="button">Начать игру</button>
+    <div id="dinoContent" class="game-content">
+      <section class="arena" aria-label="Игровое поле">
+        <canvas id="gameCanvas" width="900" height="300" aria-label="Динозавр бежит по пустыне. Перепрыгивайте кактусы и птиц."></canvas>
+        <div class="overlay" id="overlay">
+          <div class="overlay-content">
+            <h2 id="overlayTitle">Готов к приключению?</h2>
+            <p id="overlayText">Прыгай через кактусы и ставь рекорды!</p>
+            <button id="startButton" type="button">Начать игру</button>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <footer class="bottomline">
-      <span id="controlInstructions"></span>
-      <span id="pauseInstructions"><span class="key">P</span> — пауза</span>
-    </footer>
+      <footer class="bottomline">
+        <span id="controlInstructions"></span>
+        <span id="pauseInstructions"><span class="key">P</span> — пауза</span>
+      </footer>
+    </div>
+    <section class="mini-game" id="miniGameRoot" hidden aria-live="polite"></section>
   </main>
 
   <script>
@@ -339,6 +533,14 @@
       const controlInstructions = document.querySelector("#controlInstructions");
       const pauseInstructions = document.querySelector("#pauseInstructions");
       const testModeStatus = document.querySelector("#testModeStatus");
+      const devicePreview = document.querySelector("#devicePreview");
+      const gameLobby = document.querySelector("#gameLobby");
+      const gameShell = document.querySelector("#gameShell");
+      const dinoContent = document.querySelector("#dinoContent");
+      const dinoScores = document.querySelector("#dinoScores");
+      const activeGameTitle = document.querySelector("#activeGameTitle");
+      const miniGameRoot = document.querySelector("#miniGameRoot");
+      const backToGames = document.querySelector("#backToGames");
 
       const groundY = 238;
       const dino = { x: 105, y: groundY, vy: 0, width: 42, height: 48, legFrame: 0, ducking: false };
@@ -367,6 +569,7 @@
       let abductionScene = null;
       let ufoMilestoneReached = false;
       let cowMilestoneReached = false;
+      let miniGameCleanup = () => {};
 
       const coarsePointer = window.matchMedia("(pointer: coarse)");
       const hasTouchInput = () => coarsePointer.matches;
@@ -405,6 +608,248 @@
 
       function formatScore(value) {
         return String(Math.floor(value)).padStart(5, "0");
+      }
+
+      function openDinoGame() {
+        miniGameCleanup();
+        miniGameCleanup = () => {};
+        gameLobby.hidden = true;
+        gameShell.hidden = false;
+        dinoContent.hidden = false;
+        dinoScores.hidden = false;
+        miniGameRoot.hidden = true;
+        testModeStatus.hidden = !testMode;
+        activeGameTitle.textContent = "Дино-побег";
+        document.title = "Дино-побег — мини-игры";
+        pauseButton.hidden = false;
+        pauseButton.disabled = state !== "playing" && state !== "paused";
+        document.querySelector(".game .badge").textContent = "Авторский раннер · 🌵 🪽";
+
+        if (state === "ready") {
+          overlayTitle.textContent = "Готов к приключению?";
+          overlayText.textContent = "Прыгай через кактусы и ставь рекорды!";
+          startButton.textContent = "Начать игру";
+          overlay.hidden = false;
+        }
+      }
+
+      function openMiniGame(title, render) {
+        miniGameCleanup();
+        miniGameCleanup = () => {};
+        cancelAnimationFrame(animationFrame);
+        if (state === "playing" || state === "paused") {
+          state = "ready";
+          dino.ducking = false;
+          pauseButton.textContent = "Пауза";
+        }
+        gameLobby.hidden = true;
+        gameShell.hidden = false;
+        dinoContent.hidden = true;
+        dinoScores.hidden = true;
+        testModeStatus.hidden = true;
+        miniGameRoot.hidden = false;
+        pauseButton.hidden = true;
+        activeGameTitle.textContent = title;
+        document.title = `${title} — мини-игры`;
+        document.querySelector(".game .badge").textContent = "Мини-игра · на телефоне и компьютере";
+        miniGameCleanup = render(miniGameRoot);
+      }
+
+      function returnToLobby() {
+        miniGameCleanup();
+        miniGameCleanup = () => {};
+        cancelAnimationFrame(animationFrame);
+        if (state === "playing" || state === "paused") {
+          state = "ready";
+          dino.ducking = false;
+          overlay.hidden = false;
+          overlayTitle.textContent = "Готов к приключению?";
+          overlayText.textContent = "Прыгай через кактусы и ставь рекорды!";
+          startButton.textContent = "Начать игру";
+        }
+        pauseButton.hidden = false;
+        pauseButton.disabled = true;
+        pauseButton.textContent = "Пауза";
+        miniGameRoot.hidden = true;
+        gameShell.hidden = true;
+        gameLobby.hidden = false;
+        document.title = "Мини-игры — игры в браузере";
+      }
+
+      function renderMemoryGame(root) {
+        const symbols = ["🦖", "🌵", "⭐", "🛸", "🍰", "🐄"];
+        const cards = [...symbols, ...symbols].sort(() => Math.random() - .5);
+        const opened = [];
+        const matched = new Set();
+        let turns = 0;
+        let locked = false;
+        let mismatchTimer = 0;
+        root.innerHTML = `
+          <h2>Найди пару</h2>
+          <p>Открой две одинаковые карточки.</p>
+          <div class="mini-status" id="memoryStatus">Ходы: 0 · Пары: 0 из 6</div>
+          <div class="memory-grid" aria-label="Карточки для игры на память"></div>
+          <button class="mini-action" id="memoryRestart" type="button">Перемешать</button>`;
+        const grid = root.querySelector(".memory-grid");
+        const status = root.querySelector("#memoryStatus");
+        const restart = root.querySelector("#memoryRestart");
+
+        function buildCards() {
+          grid.replaceChildren();
+          cards.forEach((symbol, index) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "memory-card";
+            button.textContent = "?";
+            button.setAttribute("aria-label", `Карточка ${index + 1}, закрыта`);
+            button.addEventListener("click", () => {
+              if (locked || matched.has(index) || opened.includes(index)) return;
+              opened.push(index);
+              button.textContent = symbol;
+              button.classList.add("is-open");
+              button.setAttribute("aria-label", `Карточка ${index + 1}: ${symbol}`);
+              if (opened.length === 2) {
+                turns++;
+                locked = true;
+                const [first, second] = opened;
+                if (cards[first] === cards[second]) {
+                  matched.add(first);
+                  matched.add(second);
+                  grid.children[first].classList.add("is-matched");
+                  grid.children[second].classList.add("is-matched");
+                  opened.length = 0;
+                  locked = false;
+                  status.textContent = matched.size === cards.length
+                    ? `Победа! Все пары найдены за ${turns} ходов.`
+                    : `Ходы: ${turns} · Пары: ${matched.size / 2} из 6`;
+                  return;
+                }
+                status.textContent = `Ходы: ${turns} · Пары: ${matched.size / 2} из 6`;
+                mismatchTimer = window.setTimeout(() => {
+                  for (const cardIndex of opened) {
+                    const card = grid.children[cardIndex];
+                    card.textContent = "?";
+                    card.classList.remove("is-open");
+                    card.setAttribute("aria-label", `Карточка ${cardIndex + 1}, закрыта`);
+                  }
+                  opened.length = 0;
+                  locked = false;
+                }, 700);
+              }
+            });
+            grid.append(button);
+          });
+        }
+
+        buildCards();
+        restart.addEventListener("click", () => {
+          clearTimeout(mismatchTimer);
+          cards.sort(() => Math.random() - .5);
+          opened.length = 0;
+          matched.clear();
+          turns = 0;
+          locked = false;
+          status.textContent = "Ходы: 0 · Пары: 0 из 6";
+          buildCards();
+        });
+        return () => clearTimeout(mismatchTimer);
+      }
+
+      function renderReactionGame(root) {
+        root.innerHTML = `
+          <h2>Быстрая реакция</h2>
+          <p>Нажми кнопку, чтобы начать. Потом жди зелёный сигнал.</p>
+          <div class="mini-status" id="reactionStatus" role="status">Не торопись!</div>
+          <button class="reaction-pad" id="reactionPad" type="button">Начать</button>`;
+        const button = root.querySelector("#reactionPad");
+        const status = root.querySelector("#reactionStatus");
+        let phase = "idle";
+        let timer = 0;
+        let readyAt = 0;
+
+        button.addEventListener("click", () => {
+          if (phase === "idle") {
+            phase = "waiting";
+            button.classList.add("is-waiting");
+            button.textContent = "Жди зелёный!";
+            status.textContent = "Не нажимай, пока кнопка не позеленеет.";
+            timer = window.setTimeout(() => {
+              phase = "ready";
+              readyAt = performance.now();
+              button.classList.remove("is-waiting");
+              button.classList.add("is-ready");
+              button.textContent = "ЖМИ!";
+              status.textContent = "Сейчас!";
+            }, 1200 + Math.random() * 2200);
+          } else if (phase === "waiting") {
+            clearTimeout(timer);
+            phase = "idle";
+            button.classList.remove("is-waiting");
+            button.textContent = "Попробовать ещё";
+            status.textContent = "Слишком рано! Нажми, чтобы начать заново.";
+          } else {
+            const reaction = Math.round(performance.now() - readyAt);
+            phase = "idle";
+            button.classList.remove("is-ready");
+            button.textContent = "Ещё раз";
+            status.textContent = `Твоя реакция: ${reaction} мс`;
+          }
+        });
+        return () => clearTimeout(timer);
+      }
+
+      function renderStarsGame(root) {
+        root.innerHTML = `
+          <h2>Лови звёзды</h2>
+          <p>Нажимай на звёздочки, пока не закончились 20 секунд.</p>
+          <div class="mini-status" id="starsStatus" role="status">Счёт: 0 · Время: 20</div>
+          <div class="target-field" id="targetField">
+            <button class="target-button" id="starTarget" type="button" aria-label="Поймать звезду" hidden>⭐</button>
+          </div>
+          <button class="mini-action" id="starsStart" type="button">Начать игру</button>`;
+        const status = root.querySelector("#starsStatus");
+        const field = root.querySelector("#targetField");
+        const target = root.querySelector("#starTarget");
+        const start = root.querySelector("#starsStart");
+        let score = 0;
+        let seconds = 20;
+        let interval = 0;
+
+        function moveTarget() {
+          const maxX = Math.max(30, field.clientWidth - 35);
+          const maxY = Math.max(40, field.clientHeight - 35);
+          target.style.left = `${25 + Math.random() * (maxX - 25)}px`;
+          target.style.top = `${25 + Math.random() * (maxY - 25)}px`;
+        }
+
+        target.addEventListener("click", () => {
+          if (seconds <= 0) return;
+          score++;
+          status.textContent = `Счёт: ${score} · Время: ${seconds}`;
+          moveTarget();
+        });
+        start.addEventListener("click", () => {
+          clearInterval(interval);
+          score = 0;
+          seconds = 20;
+          status.textContent = "Счёт: 0 · Время: 20";
+          target.hidden = false;
+          start.disabled = true;
+          moveTarget();
+          interval = window.setInterval(() => {
+            seconds--;
+            if (seconds <= 0) {
+              clearInterval(interval);
+              target.hidden = true;
+              start.disabled = false;
+              start.textContent = "Играть ещё";
+              status.textContent = `Время вышло! Ты поймал звёзд: ${score}.`;
+              return;
+            }
+            status.textContent = `Счёт: ${score} · Время: ${seconds}`;
+          }, 1000);
+        });
+        return () => clearInterval(interval);
       }
 
       function startGame() {
@@ -917,10 +1362,33 @@
         else startGame();
       });
       pauseButton.addEventListener("click", togglePause);
+      backToGames.addEventListener("click", returnToLobby);
+      gameLobby.querySelectorAll("[data-game]").forEach((card) => {
+        card.addEventListener("click", () => {
+          switch (card.dataset.game) {
+            case "dino":
+              openDinoGame();
+              break;
+            case "memory":
+              openMiniGame("Найди пару", renderMemoryGame);
+              break;
+            case "reaction":
+              openMiniGame("Быстрая реакция", renderReactionGame);
+              break;
+            case "stars":
+              openMiniGame("Лови звёзды", renderStarsGame);
+              break;
+            default:
+              throw new Error(`Неизвестная мини-игра: ${card.dataset.game}`);
+          }
+        });
+      });
       document.querySelectorAll(".device-preview [data-preview-width]").forEach((button) => {
         button.addEventListener("click", () => {
           document.documentElement.style.setProperty("--preview-width", `${button.dataset.previewWidth}px`);
-          document.querySelector(".game").dataset.preview = button.dataset.previewKind;
+          gameShell.dataset.preview = button.dataset.previewKind;
+          gameLobby.dataset.preview = button.dataset.previewKind;
+          devicePreview.dataset.preview = button.dataset.previewKind;
           document.querySelectorAll(".device-preview [data-preview-width]").forEach((preset) => {
             preset.setAttribute("aria-pressed", String(preset === button));
           });
