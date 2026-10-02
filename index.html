@@ -72,6 +72,27 @@
       white-space: nowrap;
     }
 
+    .game-controls {
+      display: flex;
+      justify-content: flex-end;
+      gap: 9px;
+      margin: 16px 0 10px;
+    }
+
+    .game-controls button {
+      min-height: 34px;
+      padding: 0 13px;
+      border: 1px solid #e2e9da;
+      border-radius: 10px;
+      color: #567052;
+      background: #fbfcf8;
+      box-shadow: none;
+      font-size: 12px;
+    }
+
+    .game-controls button:hover { color: #285e44; background: #f0f5e9; }
+    .game-controls button:disabled { opacity: .45; cursor: not-allowed; }
+
     .scores {
       justify-content: flex-end;
       gap: 24px;
@@ -99,7 +120,7 @@
       border: 1px solid #e6ebdf;
       border-radius: 18px;
       background: #f7faef;
-      touch-action: manipulation;
+      touch-action: none;
       -webkit-tap-highlight-color: transparent;
     }
 
@@ -188,6 +209,7 @@
       .game { width: calc(100% - 20px); padding: 23px 16px 18px; border-radius: 22px; }
       .badge { padding: 8px 10px; font-size: 10px; }
       .scores { gap: 12px; margin-top: 20px; }
+      .game-controls { margin-top: 12px; }
       .scores strong { min-width: 35px; font-size: 15px; }
       .bottomline { font-size: 11px; }
       .bottomline span:last-child { text-align: right; }
@@ -205,7 +227,7 @@
         <p class="eyebrow">Маленькая большая игра</p>
         <h1>Дино-побег</h1>
       </div>
-      <span class="badge">🌿 Осторожно, кактусы!</span>
+      <span class="badge">Авторский раннер · 🌵 🪽</span>
     </header>
 
     <div class="scores" aria-live="polite" aria-atomic="true">
@@ -213,8 +235,12 @@
       <span>РЕКОРД<strong id="best">00000</strong></span>
     </div>
 
+    <div class="game-controls" aria-label="Управление игрой">
+      <button id="pauseButton" type="button" disabled>Пауза</button>
+    </div>
+
     <section class="arena" aria-label="Игровое поле">
-      <canvas id="gameCanvas" width="900" height="300" aria-label="Динозавр бежит по пустыне. Перепрыгивайте кактусы."></canvas>
+      <canvas id="gameCanvas" width="900" height="300" aria-label="Динозавр бежит по пустыне. Перепрыгивайте кактусы и птиц."></canvas>
       <div class="overlay" id="overlay">
         <div class="overlay-content">
           <h2 id="overlayTitle">Готов к приключению?</h2>
@@ -225,8 +251,8 @@
     </section>
 
     <footer class="bottomline">
-      <span><span class="key">ПРОБЕЛ</span> или <span class="key">↑</span> — прыгать</span>
-      <span>На телефоне — просто коснись экрана</span>
+      <span id="controlInstructions"></span>
+      <span id="pauseInstructions"><span class="key">P</span> — пауза</span>
     </footer>
   </main>
 
@@ -240,9 +266,12 @@
       const overlayTitle = document.querySelector("#overlayTitle");
       const overlayText = document.querySelector("#overlayText");
       const startButton = document.querySelector("#startButton");
+      const pauseButton = document.querySelector("#pauseButton");
+      const controlInstructions = document.querySelector("#controlInstructions");
+      const pauseInstructions = document.querySelector("#pauseInstructions");
 
       const groundY = 238;
-      const dino = { x: 105, y: groundY, vy: 0, width: 42, height: 48, legFrame: 0 };
+      const dino = { x: 105, y: groundY, vy: 0, width: 42, height: 48, legFrame: 0, ducking: false };
       const obstacles = [];
       const clouds = [
         { x: 142, y: 63, size: 1 },
@@ -257,7 +286,26 @@
       let spawnTimer = 1.25;
       let previousTime = 0;
       let animationFrame = 0;
+      let runDistance = 0;
+      let touchHoldTimer = 0;
+      let activeTouchPointer = null;
+      let touchHoldTriggered = false;
 
+      const coarsePointer = window.matchMedia("(pointer: coarse)");
+      const hasTouchInput = () => coarsePointer.matches;
+
+      function updateControlInstructions() {
+        if (hasTouchInput()) {
+          controlInstructions.textContent = "Коснись поля — прыгнуть · удерживай — пригнуться";
+          pauseInstructions.hidden = true;
+        } else {
+          controlInstructions.innerHTML = '<span class="key">ПРОБЕЛ</span> / <span class="key">↑</span> — прыжок · <span class="key">↓</span> — пригнуться';
+          pauseInstructions.hidden = false;
+        }
+      }
+
+      updateControlInstructions();
+      coarsePointer.addEventListener("change", updateControlInstructions);
       bestElement.textContent = formatScore(best);
       draw();
 
@@ -284,41 +332,81 @@
 
       function startGame() {
         cancelAnimationFrame(animationFrame);
+        clearTimeout(touchHoldTimer);
+        activeTouchPointer = null;
+        touchHoldTriggered = false;
         score = 0;
         speed = 340;
         spawnTimer = 1.1;
         dino.y = groundY;
         dino.vy = 0;
         dino.legFrame = 0;
+        dino.ducking = false;
+        runDistance = 0;
         obstacles.length = 0;
         scoreElement.textContent = formatScore(score);
         state = "playing";
+        pauseButton.disabled = false;
+        pauseButton.textContent = "Пауза";
         overlay.hidden = true;
         previousTime = performance.now();
         animationFrame = requestAnimationFrame(update);
       }
 
       function jump() {
-        if (state === "ready" || state === "over") {
-          startGame();
-          return;
-        }
+        if (state !== "playing" || dino.ducking) return;
         if (dino.y >= groundY - .5) dino.vy = -650;
+      }
+
+      function togglePause() {
+        if (state === "playing") {
+          state = "paused";
+          cancelAnimationFrame(animationFrame);
+          pauseButton.textContent = "Продолжить";
+          overlayTitle.textContent = "Передышка";
+          overlayText.textContent = "Забег на паузе. Готов продолжить?";
+          startButton.textContent = "Продолжить";
+          overlay.hidden = false;
+        } else if (state === "paused") {
+          state = "playing";
+          pauseButton.textContent = "Пауза";
+          overlay.hidden = true;
+          previousTime = performance.now();
+          animationFrame = requestAnimationFrame(update);
+        }
       }
 
       function endGame() {
         state = "over";
+        dino.ducking = false;
+        pauseButton.disabled = true;
+        pauseButton.textContent = "Пауза";
         overlayTitle.textContent = "Вот это забег!";
         overlayText.textContent = `Твой счёт — ${formatScore(score)}. Сможешь ещё дальше?`;
         startButton.textContent = "Играть ещё";
         overlay.hidden = false;
+        if (dino.y < groundY) {
+          dino.vy = Math.max(dino.vy, 0);
+          previousTime = performance.now();
+          animationFrame = requestAnimationFrame(finishCrash);
+        }
+      }
+
+      function finishCrash(time) {
+        if (state !== "over") return;
+        const dt = Math.min((time - previousTime) / 1000, .035);
+        previousTime = time;
+        dino.vy += 1800 * dt;
+        dino.y = Math.min(groundY, dino.y + dino.vy * dt);
+        draw();
+        if (dino.y < groundY) animationFrame = requestAnimationFrame(finishCrash);
       }
 
       function update(time) {
         const dt = Math.min((time - previousTime) / 1000, .035);
         previousTime = time;
         score += dt * 10;
-        speed = Math.min(340 + score * 2.1, 650);
+        speed = Math.min(340 + score * 2.1, 720);
         dino.vy += 1800 * dt;
         dino.y = Math.min(groundY, dino.y + dino.vy * dt);
         if (dino.y >= groundY) dino.vy = 0;
@@ -326,15 +414,15 @@
 
         spawnTimer -= dt;
         if (spawnTimer <= 0) {
-          obstacles.push(makeCactus());
-          spawnTimer = 1.15 + Math.random() * .8 + Math.max(0, 340 - speed) / 700;
+          obstacles.push(...makeObstacleSet());
+          spawnTimer = Math.max(1.02, 1.55 + Math.random() * .85 - score / 1200);
         }
 
         for (let i = obstacles.length - 1; i >= 0; i--) {
-          const cactus = obstacles[i];
-          cactus.x -= speed * dt;
-          if (cactus.x + cactus.width < 0) obstacles.splice(i, 1);
-          if (collides(cactus)) {
+          const obstacle = obstacles[i];
+          obstacle.x -= speed * dt;
+          if (obstacle.x + obstacle.width < 0) obstacles.splice(i, 1);
+          if (collides(obstacle)) {
             score = Math.floor(score);
             if (score > best) {
               best = score;
@@ -342,8 +430,8 @@
               saveBest(best);
             }
             scoreElement.textContent = formatScore(score);
-            draw();
             endGame();
+            draw();
             return;
           }
         }
@@ -352,60 +440,110 @@
           cloud.x -= speed * dt * .12;
           if (cloud.x < -100) cloud.x = 960 + Math.random() * 120;
         }
+        runDistance = (runDistance + speed * dt) % canvas.width;
 
         scoreElement.textContent = formatScore(score);
         draw();
         animationFrame = requestAnimationFrame(update);
       }
 
-      function makeCactus() {
-        const height = 34 + Math.random() * 18;
-        const width = 20 + Math.random() * 9;
-        return { x: 930, y: groundY + dino.height - height, width, height };
+      function makeObstacleSet() {
+        if (score > 65 && Math.random() < .3) {
+          const birdY = Math.random() < .5 ? groundY - 4 : groundY - 38;
+          return [{
+            type: "bird",
+            x: 930,
+            y: birdY,
+            width: 47,
+            height: 25,
+            wingFrame: 0
+          }];
+        }
+
+        const groupSize = score < 500
+          ? 2 + Math.floor(Math.random() * 2)
+          : 4 + Math.floor(Math.random() * 2);
+        const group = [];
+        let x = 930;
+        for (let i = 0; i < groupSize; i++) {
+          const height = 34 + Math.random() * 18;
+          const width = 20 + Math.random() * 9;
+          group.push({ type: "cactus", x, y: groundY + dino.height - height, width, height });
+          x += width + 14 + Math.random() * 12;
+        }
+        return group;
       }
 
-      function collides(cactus) {
-        const left = dino.x + 8;
-        const right = dino.x + dino.width - 6;
-        const top = dino.y + 6;
-        const bottom = dino.y + dino.height;
-        return right > cactus.x + 3 && left < cactus.x + cactus.width - 2 &&
-          bottom > cactus.y + 3 && top < groundY + dino.height;
+      function collides(obstacle) {
+        const isDucking = dino.ducking && dino.y >= groundY - .5;
+        const playerTop = isDucking ? groundY + 28 : dino.y + 6;
+        const playerBottom = isDucking ? groundY + dino.height : dino.y + dino.height;
+        const playerLeft = dino.x + (isDucking ? 2 : 8);
+        const playerRight = dino.x + (isDucking ? 48 : dino.width - 6);
+        const padding = obstacle.type === "bird" ? 5 : 3;
+        return playerRight > obstacle.x + padding &&
+          playerLeft < obstacle.x + obstacle.width - padding &&
+          playerBottom > obstacle.y + padding && playerTop < obstacle.y + obstacle.height - padding;
       }
 
       function draw() {
+        const night = Math.floor(score / 180) % 2 === 1;
+        const colors = night
+          ? { sky: "#202c3a", hill: "#2b3944", ground: "#82958b", cloud: "rgba(154, 177, 181, .48)", detail: "#70847d", cactus: "#a6c879", dino: "#d2e6a0", bird: "#dfb974" }
+          : { sky: "#f7faef", hill: "#e9f0df", ground: "#b9cba9", cloud: "rgba(208, 223, 193, .67)", detail: "#a8bf97", cactus: "#4c8c57", dino: "#285e44", bird: "#b8794c" };
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#f7faef";
+        ctx.fillStyle = colors.sky;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        clouds.forEach(drawCloud);
-        drawHill(0, 225, 180, 32);
-        drawHill(260, 232, 220, 22);
-        drawHill(620, 226, 210, 29);
+        if (night) drawNightSky();
+        clouds.forEach((cloud) => drawCloud(cloud, colors.cloud));
+        drawHill(0, 225, 180, 32, colors.hill);
+        drawHill(260, 232, 220, 22, colors.hill);
+        drawHill(620, 226, 210, 29, colors.hill);
 
-        ctx.strokeStyle = "#b9cba9";
+        ctx.strokeStyle = colors.ground;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(0, groundY + dino.height);
         ctx.lineTo(canvas.width, groundY + dino.height);
         ctx.stroke();
 
-        ctx.fillStyle = "#a8bf97";
-        for (let i = 0; i < 18; i++) {
-          const x = (i * 71 + 23) % canvas.width;
+        ctx.fillStyle = colors.detail;
+        for (let i = 0; i < 24; i++) {
+          const x = (i * 71 - runDistance) % canvas.width;
           const y = 249 + (i % 3) * 8;
           ctx.fillRect(x, y, 3 + (i % 2), 2);
         }
 
-        obstacles.forEach(drawCactus);
-        drawDino();
+        obstacles.forEach((obstacle) => {
+          if (obstacle.type === "bird") drawBird(obstacle, colors.bird);
+          else drawCactus(obstacle, colors.cactus);
+        });
+        drawDino(colors.dino);
       }
 
-      function drawCloud(cloud) {
+      function drawNightSky() {
+        ctx.fillStyle = "rgba(244, 239, 193, .9)";
+        ctx.beginPath();
+        ctx.arc(735, 57, 20, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#202c3a";
+        ctx.beginPath();
+        ctx.arc(744, 49, 18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(244, 239, 193, .75)";
+        for (let i = 0; i < 18; i++) {
+          const x = (i * 137 + 31) % canvas.width;
+          const y = 24 + (i * 47) % 138;
+          ctx.fillRect(x, y, i % 3 === 0 ? 3 : 2, i % 3 === 0 ? 3 : 2);
+        }
+      }
+
+      function drawCloud(cloud, color) {
         const x = cloud.x;
         const y = cloud.y;
         const s = cloud.size;
-        ctx.fillStyle = "rgba(208, 223, 193, .67)";
+        ctx.fillStyle = color;
         ctx.beginPath();
         ctx.ellipse(x, y, 31 * s, 9 * s, 0, 0, Math.PI * 2);
         ctx.ellipse(x - 14 * s, y - 6 * s, 13 * s, 12 * s, 0, 0, Math.PI * 2);
@@ -414,18 +552,18 @@
         ctx.fill();
       }
 
-      function drawHill(x, y, width, height) {
-        ctx.fillStyle = "#e9f0df";
+      function drawHill(x, y, width, height, color) {
+        ctx.fillStyle = color;
         ctx.beginPath();
         ctx.ellipse(x + width / 2, y + height, width / 2, height, 0, Math.PI, Math.PI * 2);
         ctx.fill();
       }
 
-      function drawCactus(cactus) {
+      function drawCactus(cactus, color) {
         const x = cactus.x;
         const top = cactus.y;
         const bottom = groundY + dino.height;
-        ctx.fillStyle = "#4c8c57";
+        ctx.fillStyle = color;
         roundedRect(x + cactus.width * .34, top, cactus.width * .34, bottom - top, 5);
         roundedRect(x, top + cactus.height * .42, cactus.width * .4, 7, 4);
         roundedRect(x, top + cactus.height * .27, 7, cactus.height * .2, 4);
@@ -433,12 +571,48 @@
         roundedRect(x + cactus.width - 7, top + cactus.height * .12, 7, cactus.height * .22, 4);
       }
 
-      function drawDino() {
+      function drawBird(bird, color) {
+        const flap = Math.sin(performance.now() / 75) * 7;
+        const midX = bird.x + bird.width / 2;
+        const midY = bird.y + bird.height / 2;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.ellipse(midX, midY, 15, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(midX - 4, midY - 2);
+        ctx.quadraticCurveTo(midX - 11, midY - 13 - flap, midX - 20, midY - 7);
+        ctx.quadraticCurveTo(midX - 11, midY - 4, midX - 4, midY + 3);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(midX + 3, midY - 2);
+        ctx.quadraticCurveTo(midX + 10, midY - 13 - flap, midX + 19, midY - 7);
+        ctx.quadraticCurveTo(midX + 11, midY - 4, midX + 3, midY + 3);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(midX + 12, midY - 2);
+        ctx.lineTo(midX + 22, midY + 1);
+        ctx.lineTo(midX + 12, midY + 3);
+        ctx.fill();
+      }
+
+      function drawDino(color) {
         const x = dino.x;
         const y = dino.y;
         const grounded = y >= groundY - .5;
         const leg = grounded && state === "playing" ? Math.floor(dino.legFrame) % 2 : 0;
-        ctx.fillStyle = "#285e44";
+        ctx.fillStyle = color;
+        if (dino.ducking && grounded) {
+          roundedRect(x + 3, groundY + 32, 39, 15, 7);
+          roundedRect(x + 32, groundY + 29, 18, 13, 6);
+          ctx.fillRect(x + 44, groundY + 32, 5, 3);
+          ctx.fillStyle = "#f6faed";
+          ctx.fillRect(x + 42, groundY + 32, 3, 3);
+          ctx.fillStyle = color;
+          roundedRect(x + 12, groundY + 43, 8, 5, 2);
+          roundedRect(x + 33, groundY + 43, 8, 5, 2);
+          return;
+        }
         ctx.beginPath();
         ctx.moveTo(x + 7, y + 31);
         ctx.lineTo(x - 4, y + 26);
@@ -448,7 +622,7 @@
         roundedRect(x + 5, y + 18, 23, 24, 7);
         roundedRect(x + 18, y + 4, 21, 20, 6);
         roundedRect(x + 31, y + 11, 17, 10, 4);
-        ctx.fillStyle = "#285e44";
+        ctx.fillStyle = color;
         ctx.fillRect(x + 23, y + 2, 5, 5);
         ctx.fillRect(x + 34, y + 2, 5, 5);
         ctx.fillStyle = "#f6faed";
@@ -467,16 +641,69 @@
         ctx.fill();
       }
 
-      startButton.addEventListener("click", startGame);
+      startButton.addEventListener("click", () => {
+        if (state === "paused") togglePause();
+        else startGame();
+      });
+      pauseButton.addEventListener("click", togglePause);
       canvas.addEventListener("pointerdown", (event) => {
         event.preventDefault();
+        if (event.pointerType === "touch") {
+          if (state === "ready" || state === "over") startGame();
+          if (state !== "playing") return;
+
+          activeTouchPointer = event.pointerId;
+          touchHoldTriggered = false;
+          canvas.setPointerCapture(event.pointerId);
+          touchHoldTimer = window.setTimeout(() => {
+            if (activeTouchPointer === event.pointerId && state === "playing") {
+              touchHoldTriggered = true;
+              dino.ducking = true;
+            }
+          }, 220);
+          return;
+        }
+        if (state === "ready" || state === "over") {
+          startGame();
+          return;
+        }
         jump();
       });
+      function finishTouch(event, allowTapJump) {
+        if (event.pointerId !== activeTouchPointer) return;
+        clearTimeout(touchHoldTimer);
+        if (state === "playing") {
+          if (touchHoldTriggered) dino.ducking = false;
+          else if (allowTapJump) jump();
+        }
+        activeTouchPointer = null;
+        touchHoldTriggered = false;
+      }
+
+      canvas.addEventListener("pointerup", (event) => finishTouch(event, true));
+      canvas.addEventListener("pointercancel", (event) => finishTouch(event, false));
+      canvas.addEventListener("lostpointercapture", (event) => finishTouch(event, false));
       document.addEventListener("keydown", (event) => {
-        if (event.code === "Space" || event.code === "ArrowUp" || event.code === "KeyW") {
+        if (event.code === "KeyP" || event.code === "Escape") {
           event.preventDefault();
+          togglePause();
+        } else if (event.code === "ArrowDown" || event.code === "KeyS") {
+          event.preventDefault();
+          if (state === "playing" && dino.y >= groundY - .5) dino.ducking = true;
+        } else if (event.code === "Space" || event.code === "ArrowUp" || event.code === "KeyW") {
+          event.preventDefault();
+          if (state === "ready" || state === "over") {
+            startGame();
+            return;
+          }
           jump();
         }
+      });
+      document.addEventListener("keyup", (event) => {
+        if (event.code === "ArrowDown" || event.code === "KeyS") dino.ducking = false;
+      });
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden && state === "playing") togglePause();
       });
     })();
   </script>
