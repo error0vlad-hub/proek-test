@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080e19">
+  <title>Кристальный путь — мини-игры</title>
+  <link rel="stylesheet" href="game-ui.css">
+  <link rel="stylesheet" href="game-page.css">
+</head>
+<body>
+  <header class="site-header game-page-header">
+    <a class="brand-link" href="../index.html"><span class="brand-mark" aria-hidden="true">N</span><span class="brand-copy"><strong>NovaTorrent</strong><small>GAME HUB</small></span></a>
+    <a class="back-link" href="../index.html">← Все игры</a>
+    <a class="site-nav-link" href="https://novatorrent-games.netlify.app/">На основной сайт <span aria-hidden="true">↗</span></a>
+  </header>
+  <nav class="device-preview" id="devicePreview" data-preview="laptop" aria-label="Настройки отображения игры">
+    <span class="device-preview-label">РАЗМЕР ЭКРАНА</span>
+    <button type="button" data-preview-width="390" data-preview-kind="phone" aria-pressed="false">Телефон</button>
+    <button type="button" data-preview-width="768" data-preview-kind="tablet" aria-pressed="false">Планшет</button>
+    <button type="button" data-preview-width="1024" data-preview-kind="laptop" aria-pressed="true">Ноутбук</button>
+    <button type="button" data-preview-width="1366" data-preview-kind="computer" aria-pressed="false">Компьютер</button>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Включить тёмную тему" aria-pressed="false" title="Включить тёмную тему">☾</button>
+  </nav>
+  <main class="game" data-preview="laptop">
+    <header class="topline"><div><p class="eyebrow">Мини-игра · на телефоне и компьютере</p><h1>Кристальный путь</h1></div></header>
+    <section class="mini-game" id="gameRoot" aria-live="polite"></section>
+  </main>
+  <script src="game-settings.js"></script>
+  <script src="platformer.js"></script>
+</body>
+</html>
