@@ -23,7 +23,7 @@
       min-width: 320px;
       min-height: 100vh;
       margin: 0;
-      padding: clamp(16px, 4vh, 36px) 0 24px;
+      padding: clamp(76px, 10vh, 92px) 0 24px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -33,6 +33,39 @@
         radial-gradient(ellipse at 12% 12%, rgba(199, 225, 164, .36), transparent 34%),
         radial-gradient(ellipse at 90% 28%, rgba(196, 222, 183, .24), transparent 32%),
         #f4f7ed;
+    }
+
+    .return-home {
+      position: fixed;
+      z-index: 20;
+      top: 16px;
+      right: max(18px, calc((100vw - 1024px) / 2));
+      display: inline-flex;
+      min-height: 44px;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 0 17px;
+      border: 1px solid #3d7550;
+      border-radius: 999px;
+      color: #fff;
+      background: linear-gradient(135deg, #367b57, #24593d);
+      box-shadow: 0 8px 22px rgba(36, 89, 61, .28);
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .return-home:hover {
+      transform: translateY(-2px);
+      background: linear-gradient(135deg, #438d64, #2b6948);
+      box-shadow: 0 11px 26px rgba(36, 89, 61, .34);
+    }
+
+    .return-home:focus-visible {
+      outline: 3px solid #a9d978;
+      outline-offset: 3px;
     }
 
     .game {
@@ -808,6 +841,10 @@
   </style>
 </head>
 <body>
+  <a class="return-home" href="https://novatorrent-games.netlify.app/" aria-label="Вернуться на сайт NovaTorrent">
+    <span aria-hidden="true">←</span>
+    <span>Вернуться в NovaTorrent</span>
+  </a>
   <nav class="device-preview" id="devicePreview" data-preview="laptop" aria-label="Проверка размеров экрана">
     <span class="device-preview-label">РАЗМЕР ЭКРАНА</span>
     <button type="button" data-preview-width="390" data-preview-kind="phone" aria-pressed="false">Телефон</button>
